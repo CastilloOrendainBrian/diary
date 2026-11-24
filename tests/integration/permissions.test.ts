@@ -84,6 +84,27 @@ describe("database roles and least privilege", () => {
       expect(result.rows[0]?.count).toBe("1");
     });
 
+    it("reads diary rows of every user despite row level security (BYPASSRLS)", async () => {
+      const userIds = await Promise.all(
+        ["c1@example.com", "c2@example.com"].map(async (email) => {
+          const row = await owner.pool.query<{ id: string }>(
+            "INSERT INTO users (email, display_name) VALUES ($1, 'C') RETURNING id",
+            [email],
+          );
+          return row.rows[0]?.id;
+        }),
+      );
+      for (const userId of userIds) {
+        await owner.pool.query(
+          "INSERT INTO entries (user_id, entry_date, entry_time) VALUES ($1, '2026-01-01', '10:00')",
+          [userId],
+        );
+      }
+
+      const result = await backup.query<{ count: string }>("SELECT count(*) FROM entries");
+      expect(result.rows[0]?.count).toBe("2");
+    });
+
     it("cannot write to any table", async () => {
       await expect(
         backup.query("INSERT INTO users (email, display_name) VALUES ('no@example.com', 'No')"),

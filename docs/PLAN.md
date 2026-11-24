@@ -751,51 +751,50 @@ flowchart TB
 
 ```sql
 ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE entries FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY entries_owner ON entries
   USING (user_id = current_setting('app.user_id', true)::uuid)
   WITH CHECK (user_id = current_setting('app.user_id', true)::uuid);
 ```
 
-Igual para `tags`, y para `entry_tags` a través de la nota. Cada transacción de datos fija `set_config('app.user_id', <id>, true)`. Si el filtrado de la aplicación falla, la base de datos no devuelve datos ajenos.
+Igual para `tags`, y para `entry_tags` a través de la nota. No se usa `FORCE`: el dueño de las tablas (`diary_owner`) es el rol de mantenimiento y queda fuera de RLS; el aislamiento en ejecución lo aplica `diary_app`. `diary_backup` tiene `BYPASSRLS` para copiar todas las filas. Cada transacción de datos fija `set_config('app.user_id', <id>, true)`. Si el filtrado de la aplicación falla, la base de datos no devuelve datos ajenos.
 
 ---
 
 ## 8. API REST (`/api`)
 
-| Método | Ruta                             | Permiso                    | Descripción                                                            |
-| ------ | -------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| POST   | `/api/auth/code`                 | público (rate limit)       | Solicita código por correo (registro o acceso)                         |
-| POST   | `/api/auth/code/verify`          | público (rate limit)       | Verifica código, crea cuenta si es nueva e inicia sesión               |
-| POST   | `/api/auth/logout`               | sesión                     | Cierra la sesión actual                                                |
-| GET    | `/api/auth/me`                   | sesión                     | Usuario y permisos efectivos                                           |
-| GET    | `/api/account`                   | `profile:update`           | Perfil propio                                                          |
-| PATCH  | `/api/account`                   | `profile:update`           | Cambia nombre visible y zona horaria                                   |
-| GET    | `/api/account/sessions`          | `profile:update`           | Lista sesiones activas                                                 |
-| DELETE | `/api/account/sessions/:id`      | `profile:update`           | Revoca una sesión                                                      |
-| POST   | `/api/account/deletion`          | `profile:update`           | Solicita eliminación; se programa a 30 días y se cierran las sesiones  |
-| DELETE | `/api/account/deletion`          | `profile:update`           | Cancela la eliminación programada (también al volver a iniciar sesión) |
-| GET    | `/api/entries?from=&to=`         | `entries:read`             | Notas propias en un rango de fechas, ordenadas por fecha y hora        |
-| GET    | `/api/entries/:id`               | `entries:read`             | Detalle de una nota propia                                             |
-| POST   | `/api/entries`                   | `entries:write`            | Crea una nota (`entry_date`, `entry_time`, `title`, `content`, `tags`) |
-| PATCH  | `/api/entries/:id`               | `entries:write`            | Actualiza una nota (incluida fecha y hora)                             |
-| DELETE | `/api/entries/:id`               | `entries:delete`           | Elimina una nota                                                       |
-| GET    | `/api/days/:date`                | `entries:read`             | Notas de un día, ordenadas por hora                                    |
-| GET    | `/api/calendar?month=YYYY-MM`    | `entries:read`             | Días con notas del mes                                                 |
-| GET    | `/api/search?q=`                 | `entries:read`             | Búsqueda full-text propia                                              |
-| GET    | `/api/tags`                      | `entries:read`             | Etiquetas propias                                                      |
-| PUT    | `/api/tags/:id`                  | `tags:manage`              | Renombra etiqueta                                                      |
-| DELETE | `/api/tags/:id`                  | `tags:manage`              | Elimina etiqueta                                                       |
-| GET    | `/api/export?format=json\|md`    | `export:run`               | Exporta notas propias                                                  |
-| GET    | `/api/admin/users`               | `users:read`               | Lista usuarios (sin contenido)                                         |
-| PATCH  | `/api/admin/users/:id`           | `users:manage`             | Activa o desactiva la cuenta                                           |
-| POST   | `/api/admin/users/:id/deletion`  | `users:manage`             | Programa la eliminación con 30 días de gracia                          |
-| DELETE | `/api/admin/users/:id/deletion`  | `users:manage`             | Cancela la eliminación programada                                      |
-| PUT    | `/api/admin/users/:id/roles`     | `roles:manage`             | Reemplaza los roles del usuario                                        |
-| GET    | `/api/admin/roles`               | `roles:manage`             | Lista roles y permisos                                                 |
-| GET    | `/api/admin/audit?user=&action=` | `audit:read`               | Consulta auditoría (paginada)                                          |
-| GET    | `/api/health`                    | público (sólo desde nginx) | Health check                                                           |
+| Método | Ruta                                | Permiso                    | Descripción                                                            |
+| ------ | ----------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| POST   | `/api/auth/code`                    | público (rate limit)       | Solicita código por correo (registro o acceso)                         |
+| POST   | `/api/auth/code/verify`             | público (rate limit)       | Verifica código, crea cuenta si es nueva e inicia sesión               |
+| POST   | `/api/auth/logout`                  | sesión                     | Cierra la sesión actual                                                |
+| GET    | `/api/auth/me`                      | sesión                     | Usuario y permisos efectivos                                           |
+| GET    | `/api/account`                      | `profile:update`           | Perfil propio                                                          |
+| PATCH  | `/api/account`                      | `profile:update`           | Cambia nombre visible y zona horaria                                   |
+| GET    | `/api/account/sessions`             | `profile:update`           | Lista sesiones activas                                                 |
+| DELETE | `/api/account/sessions/:id`         | `profile:update`           | Revoca una sesión                                                      |
+| POST   | `/api/account/deletion`             | `profile:update`           | Solicita eliminación; se programa a 30 días y se cierran las sesiones  |
+| DELETE | `/api/account/deletion`             | `profile:update`           | Cancela la eliminación programada (también al volver a iniciar sesión) |
+| GET    | `/api/entries?from=&to=`            | `entries:read`             | Notas propias en un rango de fechas, ordenadas por fecha y hora        |
+| GET    | `/api/entries/:id`                  | `entries:read`             | Detalle de una nota propia                                             |
+| POST   | `/api/entries`                      | `entries:write`            | Crea una nota (`entry_date`, `entry_time`, `title`, `content`, `tags`) |
+| PATCH  | `/api/entries/:id`                  | `entries:write`            | Actualiza una nota (incluida fecha y hora)                             |
+| DELETE | `/api/entries/:id`                  | `entries:delete`           | Elimina una nota                                                       |
+| GET    | `/api/days/:date`                   | `entries:read`             | Notas de un día, ordenadas por hora                                    |
+| GET    | `/api/calendar?month=YYYY-MM`       | `entries:read`             | Días con notas del mes                                                 |
+| GET    | `/api/search?q=`                    | `entries:read`             | Búsqueda full-text propia                                              |
+| GET    | `/api/tags`                         | `entries:read`             | Etiquetas propias                                                      |
+| PUT    | `/api/tags/:id`                     | `tags:manage`              | Renombra etiqueta                                                      |
+| DELETE | `/api/tags/:id`                     | `tags:manage`              | Elimina etiqueta                                                       |
+| GET    | `/api/export?format=json\|md`       | `export:run`               | Exporta notas propias                                                  |
+| GET    | `/api/admin/users`                  | `users:read`               | Lista usuarios (sin contenido)                                         |
+| PATCH  | `/api/admin/users/:id`              | `users:manage`             | Activa o desactiva la cuenta                                           |
+| POST   | `/api/admin/users/:id/deletion`     | `users:manage`             | Programa la eliminación con 30 días de gracia                          |
+| DELETE | `/api/admin/users/:id/deletion`     | `users:manage`             | Cancela la eliminación programada                                      |
+| PUT    | `/api/admin/users/:id/roles`        | `roles:manage`             | Reemplaza los roles del usuario                                        |
+| GET    | `/api/admin/roles`                  | `roles:manage`             | Lista roles y permisos                                                 |
+| GET    | `/api/admin/audit?actorId=&action=` | `audit:read`               | Consulta auditoría (paginada)                                          |
+| GET    | `/api/health`                       | público (sólo desde nginx) | Health check                                                           |
 
 Validaciones relevantes:
 
@@ -1179,13 +1178,13 @@ Scripts previstos en `package.json`:
 
 ### Fase 3 – Autorización y administración (2–3 días)
 
-- [ ] Middleware `authorize(permiso)` y middleware de sesión.
-- [ ] Rutas `/api/admin/users`, `/roles` y asignación de roles.
-- [ ] Reglas de asignación (último admin, auto-desactivación).
-- [ ] Desactivar/reactivar cuenta con revocación de sesiones.
-- [ ] RLS en `entries`, `tags`, `entry_tags` y transacciones con `app.user_id`.
-- [ ] Auditoría en todas las acciones sensibles.
-- [ ] Tests de matriz de permisos (ruta × rol) y de aislamiento entre usuarios.
+- [x] Middleware `authorize(permiso)` y middleware de sesión.
+- [x] Rutas `/api/admin/users`, `/roles` y asignación de roles.
+- [x] Reglas de asignación (último admin, auto-desactivación).
+- [x] Desactivar/reactivar cuenta con revocación de sesiones.
+- [x] RLS en `entries`, `tags`, `entry_tags` y transacciones con `app.user_id`.
+- [x] Auditoría en todas las acciones sensibles.
+- [x] Tests de matriz de permisos (ruta × rol) y de aislamiento entre usuarios.
 
 ### Fase 4 – Notas y frontend (4 días)
 

@@ -20,7 +20,7 @@ describe("migrations", () => {
       "SELECT count(*) FROM drizzle.__drizzle_migrations",
     );
 
-    expect(result.rows[0]?.count).toBe("3");
+    expect(result.rows[0]?.count).toBe("4");
   });
 
   it("is idempotent: running migrations again changes nothing", async () => {

@@ -22,6 +22,13 @@
       "when": 1795493469547,
       "tag": "0002_least_privilege_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795522008366,
+      "tag": "0003_row_level_security",
+      "breakpoints": true
     }
   ]
 }

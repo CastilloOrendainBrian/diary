@@ -23,4 +23,7 @@ export const errors = {
     new ApiError(403, "REGISTRATION_CLOSED", "Registration is not available"),
   notFound: (what: string) => new ApiError(404, "NOT_FOUND", `${what} not found`),
   validation: (message: string) => new ApiError(400, "VALIDATION_ERROR", message),
+  cannotModifySelf: () =>
+    new ApiError(409, "CANNOT_MODIFY_SELF", "You cannot make this change to your own account"),
+  lastAdmin: () => new ApiError(409, "LAST_ADMIN", "At least one active administrator must remain"),
 };
