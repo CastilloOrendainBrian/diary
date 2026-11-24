@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+secrets/
+
+# Local data and backups
+data/
+backups/
+*.dump
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+node_modules

@@ -1,0 +1,32 @@
+# Development-only infrastructure: PostgreSQL 16.
+# The application itself runs on the host with `npm run dev`.
+# Development credentials below are NOT for production; production uses Docker secrets.
+name: diary-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: diary
+      POSTGRES_USER: diary_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diary_dev_password}
+      DIARY_APP_PASSWORD: ${DIARY_APP_PASSWORD:-diary_app_dev_password}
+      DIARY_BACKUP_PASSWORD: ${DIARY_BACKUP_PASSWORD:-diary_backup_dev_password}
+      DIARY_TEST_DATABASE: "true"
+    ports:
+      # Host 5433 -> container 5432, bound to localhost only.
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      # Runs once on first initialization of the volume.
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+      - ./deploy/postgres/grant-privileges.sql:/opt/diary/grant-privileges.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diary_owner -d diary"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata_dev:

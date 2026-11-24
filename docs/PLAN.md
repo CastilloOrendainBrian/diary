@@ -8,24 +8,24 @@ Se despliega en un servidor Ubuntu con contenedores Docker, PostgreSQL como base
 
 **Stack propuesto**
 
-| Capa | Tecnología | Motivo |
-|------|------------|--------|
-| Runtime | Node.js 22 LTS | Soporte a largo plazo |
-| Lenguaje | TypeScript (modo `strict`) | Tipado en backend y frontend |
-| Backend | Fastify | Rápido, buen soporte de TypeScript y validación con JSON Schema |
-| Frontend | React + Vite | Build rápido y SPA sencilla |
-| Estilos | Tailwind CSS v4 | Utilidades CSS, sin ficheros de estilos por componente |
-| Internacionalización | i18next (`react-i18next`) | Textos en español por defecto, preparado para más idiomas |
-| Base de datos | PostgreSQL 16 | Relacional, roles y permisos nativos, RLS, búsqueda full-text |
-| Acceso a datos | Drizzle ORM + driver `pg` | Tipado de esquema, migraciones versionadas |
-| Validación | Zod (compartido front/back) | Un único esquema para validar datos |
-| Correo transaccional | Resend (SDK `resend`) | API simple, dominio propio, SPF/DKIM |
-| Códigos de acceso | HMAC-SHA256 con secreto de servidor (`node:crypto`) | Códigos de 6 dígitos de un solo uso, almacenados como hash |
-| Sesiones | Cookie `httpOnly` + tabla `sessions` en PostgreSQL | Sesiones revocables en cualquier momento |
-| Autorización | RBAC (usuarios → roles → permisos) + ownership + RLS | Control por permisos y aislamiento entre usuarios |
-| Exposición pública | Cloudflare Tunnel (`cloudflared`) + Nginx | HTTPS gestionado por Cloudflare, sin puertos abiertos en el servidor; Nginx como proxy interno y limitación de tasa |
-| Tests | Vitest (unitarios e integración), Playwright (e2e) | Herramientas nativas de TS |
-| Contenedores | Docker multi-stage + Docker Compose | Build reproducible y despliegue simple |
+| Capa                 | Tecnología                                           | Motivo                                                                                                              |
+| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Runtime              | Node.js 22 LTS                                       | Soporte a largo plazo                                                                                               |
+| Lenguaje             | TypeScript (modo `strict`)                           | Tipado en backend y frontend                                                                                        |
+| Backend              | Fastify                                              | Rápido, buen soporte de TypeScript y validación con JSON Schema                                                     |
+| Frontend             | React + Vite                                         | Build rápido y SPA sencilla                                                                                         |
+| Estilos              | Tailwind CSS v4                                      | Utilidades CSS, sin ficheros de estilos por componente                                                              |
+| Internacionalización | i18next (`react-i18next`)                            | Textos en español por defecto, preparado para más idiomas                                                           |
+| Base de datos        | PostgreSQL 16                                        | Relacional, roles y permisos nativos, RLS, búsqueda full-text                                                       |
+| Acceso a datos       | Drizzle ORM + driver `pg`                            | Tipado de esquema, migraciones versionadas                                                                          |
+| Validación           | Zod (compartido front/back)                          | Un único esquema para validar datos                                                                                 |
+| Correo transaccional | Resend (SDK `resend`)                                | API simple, dominio propio, SPF/DKIM                                                                                |
+| Códigos de acceso    | HMAC-SHA256 con secreto de servidor (`node:crypto`)  | Códigos de 6 dígitos de un solo uso, almacenados como hash                                                          |
+| Sesiones             | Cookie `httpOnly` + tabla `sessions` en PostgreSQL   | Sesiones revocables en cualquier momento                                                                            |
+| Autorización         | RBAC (usuarios → roles → permisos) + ownership + RLS | Control por permisos y aislamiento entre usuarios                                                                   |
+| Exposición pública   | Cloudflare Tunnel (`cloudflared`) + Nginx            | HTTPS gestionado por Cloudflare, sin puertos abiertos en el servidor; Nginx como proxy interno y limitación de tasa |
+| Tests                | Vitest (unitarios e integración), Playwright (e2e)   | Herramientas nativas de TS                                                                                          |
+| Contenedores         | Docker multi-stage + Docker Compose                  | Build reproducible y despliegue simple                                                                              |
 
 ---
 
@@ -103,11 +103,11 @@ Servicios externos: **Cloudflare** (DNS, HTTPS público, túnel) y **Resend** (c
 
 Puertos del servidor:
 
-| Puerto | Protocolo | Enlace | Uso |
-|--------|-----------|--------|-----|
-| 3004 | HTTP | `127.0.0.1:3004 → nginx:80` | Entrada local de nginx (diagnóstico y cloudflared si se ejecuta en el host) |
-| 5433 | TCP | `127.0.0.1:5433 → postgres:5432` | Acceso local a PostgreSQL (cliente, pruebas) |
-| 80 / 443 | — | no publicados | HTTPS lo termina Cloudflare; no se abren al exterior |
+| Puerto   | Protocolo | Enlace                           | Uso                                                                         |
+| -------- | --------- | -------------------------------- | --------------------------------------------------------------------------- |
+| 3004     | HTTP      | `127.0.0.1:3004 → nginx:80`      | Entrada local de nginx (diagnóstico y cloudflared si se ejecuta en el host) |
+| 5433     | TCP       | `127.0.0.1:5433 → postgres:5432` | Acceso local a PostgreSQL (cliente, pruebas)                                |
+| 80 / 443 | —         | no publicados                    | HTTPS lo termina Cloudflare; no se abren al exterior                        |
 
 ### 3.2 Estructura del repositorio
 
@@ -155,7 +155,8 @@ diary/
 │   │   ├── proxy_params.conf
 │   │   └── conf.d/diary.conf      # Servidor HTTP interno (TLS lo termina Cloudflare)
 │   └── postgres/
-│       └── init-roles.sql         # Roles de base de datos
+│       ├── init-roles.sh          # Crea roles diary_app y diary_backup (primer arranque)
+│       └── grant-privileges.sql   # Privilegios de los roles sobre la base de datos
 ├── scripts/
 │   └── backup/                    # Imagen de backup (Dockerfile + backup.sh)
 ├── Dockerfile
@@ -169,18 +170,19 @@ diary/
 
 ### 3.3 Convenciones de código e idioma
 
-| Elemento | Idioma | Ejemplo |
-|----------|--------|---------|
-| Código (variables, funciones, clases, ficheros) | Inglés | `createEntry`, `login-codes.repository.ts` |
-| Comentarios y JSDoc | Inglés | `// Hash the code so a DB dump cannot be replayed` |
-| Nombres de tablas, columnas y endpoints | Inglés | `entries`, `entry_time`, `/api/entries` |
-| Mensajes de commit, PRs, issues | Inglés | `feat(auth): add email code verification` |
-| Mensajes de error de la API (códigos de error) | Inglés | `INVALID_CODE`, `ACCOUNT_DISABLED` |
-| Textos visibles para el usuario | Español, vía i18n (`es`) | "Te hemos enviado un código" |
-| Plantillas de correo (contenido) | Español, vía i18n | Asunto y cuerpo en español |
-| Documentación del proyecto (`docs/`, README) | Español | Este documento |
+| Elemento                                        | Idioma                   | Ejemplo                                            |
+| ----------------------------------------------- | ------------------------ | -------------------------------------------------- |
+| Código (variables, funciones, clases, ficheros) | Inglés                   | `createEntry`, `login-codes.repository.ts`         |
+| Comentarios y JSDoc                             | Inglés                   | `// Hash the code so a DB dump cannot be replayed` |
+| Nombres de tablas, columnas y endpoints         | Inglés                   | `entries`, `entry_time`, `/api/entries`            |
+| Mensajes de commit, PRs, issues                 | Inglés                   | `feat(auth): add email code verification`          |
+| Mensajes de error de la API (códigos de error)  | Inglés                   | `INVALID_CODE`, `ACCOUNT_DISABLED`                 |
+| Textos visibles para el usuario                 | Español, vía i18n (`es`) | "Te hemos enviado un código"                       |
+| Plantillas de correo (contenido)                | Español, vía i18n        | Asunto y cuerpo en español                         |
+| Documentación del proyecto (`docs/`, README)    | Español                  | Este documento                                     |
 
 Reglas:
+
 - Ningún texto visible está escrito directamente en un componente: todo pasa por claves de i18n (`src/client/locales/es.json`, `en.json` cuando llegue).
 - Los documentos de `docs/` se mantienen en español; el código y sus comentarios, en inglés.
 
@@ -386,7 +388,7 @@ CREATE TABLE entries (
                 ) STORED,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
-  CHECK (entry_time = date_trunc('minute', entry_time))
+  CHECK (extract(second from entry_time) = 0)  -- date_trunc does not accept time values
 );
 CREATE INDEX entries_user_day_idx ON entries(user_id, entry_date, entry_time);
 CREATE INDEX entries_search_idx ON entries USING GIN (search_vector);
@@ -427,13 +429,13 @@ Registro e inicio de sesión usan el mismo flujo: **email + código**. Si el ema
 
 Parámetros configurables:
 
-| Variable | Valor por defecto | Función |
-|----------|-------------------|---------|
-| `REGISTRATION_ENABLED` | `true` | Permite crear cuentas nuevas. Se recomienda ponerlo a `false` tras crear las cuentas necesarias. |
-| `ALLOWED_EMAIL_DOMAINS` | vacío | Lista opcional de dominios permitidos para registro. |
-| `CODE_TTL_MINUTES` | `10` | Caducidad del código. |
-| `CODE_MAX_ATTEMPTS` | `5` | Intentos por código antes de invalidarlo. |
-| `CODE_REQUEST_LIMIT` | `3 / 15 min` | Códigos máximos por email en ese intervalo. |
+| Variable                | Valor por defecto | Función                                                                                          |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `REGISTRATION_ENABLED`  | `true`            | Permite crear cuentas nuevas. Se recomienda ponerlo a `false` tras crear las cuentas necesarias. |
+| `ALLOWED_EMAIL_DOMAINS` | vacío             | Lista opcional de dominios permitidos para registro.                                             |
+| `CODE_TTL_MINUTES`      | `10`              | Caducidad del código.                                                                            |
+| `CODE_MAX_ATTEMPTS`     | `5`               | Intentos por código antes de invalidarlo.                                                        |
+| `CODE_REQUEST_LIMIT`    | `3 / 15 min`      | Códigos máximos por email en ese intervalo.                                                      |
 
 ### 5.2 Flujo: solicitar código
 
@@ -523,6 +525,7 @@ stateDiagram-v2
 ```
 
 Notas:
+
 - Al deshabilitar una cuenta se revocan todas sus sesiones y no se le envían códigos.
 - Un código puede ser consumido por el usuario o caducar; en ambos casos no se puede reutilizar.
 
@@ -546,6 +549,7 @@ flowchart TD
 ```
 
 Detalles:
+
 - La sesión se renueva (`last_seen_at`, `expires_at`) como máximo una vez cada pocas horas.
 - Un 404 en lugar de 403 cuando el recurso pertenece a otro usuario evita revelar qué IDs existen.
 - Al deshabilitar un usuario se revocan sus sesiones (`revoked_at = now()`).
@@ -587,6 +591,7 @@ sequenceDiagram
 ```
 
 Reglas:
+
 - Una cuenta pendiente de eliminación no puede usarse para nada más que cancelar la eliminación al iniciar sesión.
 - El usuario o el admin pueden cancelar la eliminación en cualquier momento antes de los 30 días.
 - Un admin no puede solicitar la eliminación de su propia cuenta si es el último admin activo.
@@ -604,7 +609,12 @@ Reglas:
 ```ts
 // src/server/mail/mailer.ts
 export interface MailService {
-  sendLoginCode(input: { to: string; code: string; ttlMinutes: number; idempotencyKey: string }): Promise<{ providerId: string }>;
+  sendLoginCode(input: {
+    to: string;
+    code: string;
+    ttlMinutes: number;
+    idempotencyKey: string;
+  }): Promise<{ providerId: string }>;
 }
 ```
 
@@ -616,20 +626,20 @@ export interface MailService {
 ### 6.2 Configuración en Resend
 
 1. Crear cuenta en Resend y **verificar el dominio** (p. ej. `midominio.com`) añadiendo los registros DNS que indica: SPF, DKIM y, recomendado, DMARC (`p=none` al inicio).
-2. Crear una API key con permiso de envío (*sending access*), restringida al dominio si el plan lo permite.
+2. Crear una API key con permiso de envío (_sending access_), restringida al dominio si el plan lo permite.
 3. Remitente: `MAIL_FROM="Diario <no-reply@midominio.com>"`.
 4. Revisar en el panel de Resend los envíos, rebotes y los límites de tu plan antes de abrir el registro.
 
 ### 6.3 Variables y dependencias nuevas
 
-| Elemento | Detalle |
-|----------|---------|
-| Dependencia npm | `resend` |
-| Variable | `RESEND_API_KEY` (secreto; en Docker secret) |
-| Variable | `MAIL_FROM` |
-| Variable | `MAIL_REPLY_TO` (opcional) |
-| Variable | `MAIL_PROVIDER` = `resend` \| `console` |
-| Variable | `CODE_HMAC_SECRET` (secreto; 32+ bytes aleatorios para HMAC de códigos) |
+| Elemento        | Detalle                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| Dependencia npm | `resend`                                                                |
+| Variable        | `RESEND_API_KEY` (secreto; en Docker secret)                            |
+| Variable        | `MAIL_FROM`                                                             |
+| Variable        | `MAIL_REPLY_TO` (opcional)                                              |
+| Variable        | `MAIL_PROVIDER` = `resend` \| `console`                                 |
+| Variable        | `CODE_HMAC_SECRET` (secreto; 32+ bytes aleatorios para HMAC de códigos) |
 
 Dependencias eliminadas respecto a la versión anterior: `@node-rs/argon2`, la tabla `invitations` y las rutas de contraseña.
 
@@ -687,18 +697,18 @@ El permiso efectivo de un usuario es la unión de los permisos de todos sus role
 
 ### 7.2 Matriz de permisos
 
-| Permiso | Descripción | `user` | `admin` |
-|---------|-------------|:------:|:-------:|
-| `entries:read` | Leer las notas propias | ✅ | ❌ |
-| `entries:write` | Crear y editar notas propias | ✅ | ❌ |
-| `entries:delete` | Borrar notas propias | ✅ | ❌ |
-| `tags:manage` | Gestionar etiquetas propias | ✅ | ❌ |
-| `export:run` | Exportar notas propias | ✅ | ❌ |
-| `profile:update` | Editar perfil y gestionar sesiones propias | ✅ | ✅ |
-| `users:read` | Ver lista de usuarios (sin contenido) | ❌ | ✅ |
-| `users:manage` | Desactivar, reactivar y eliminar usuarios | ❌ | ✅ |
-| `roles:manage` | Asignar y quitar roles | ❌ | ✅ |
-| `audit:read` | Consultar el registro de auditoría | ❌ | ✅ |
+| Permiso          | Descripción                                | `user` | `admin` |
+| ---------------- | ------------------------------------------ | :----: | :-----: |
+| `entries:read`   | Leer las notas propias                     |   ✅   |   ❌    |
+| `entries:write`  | Crear y editar notas propias               |   ✅   |   ❌    |
+| `entries:delete` | Borrar notas propias                       |   ✅   |   ❌    |
+| `tags:manage`    | Gestionar etiquetas propias                |   ✅   |   ❌    |
+| `export:run`     | Exportar notas propias                     |   ✅   |   ❌    |
+| `profile:update` | Editar perfil y gestionar sesiones propias |   ✅   |   ✅    |
+| `users:read`     | Ver lista de usuarios (sin contenido)      |   ❌   |   ✅    |
+| `users:manage`   | Desactivar, reactivar y eliminar usuarios  |   ❌   |   ✅    |
+| `roles:manage`   | Asignar y quitar roles                     |   ❌   |   ✅    |
+| `audit:read`     | Consultar el registro de auditoría         |   ❌   |   ✅    |
 
 > Regla de diseño: **el administrador gestiona cuentas, pero no tiene permisos sobre las notas de otros usuarios.** Un admin que también quiera escribir su diario debe tener además el rol `user`.
 
@@ -713,7 +723,7 @@ El permiso efectivo de un usuario es la unión de los permisos de todos sus role
 
 ### 7.4 Roles de base de datos (mínimo privilegio)
 
-Independientes de los roles de la aplicación. Se crean en `deploy/postgres/init-roles.sql`.
+Independientes de los roles de la aplicación. Se crean en `deploy/postgres/init-roles.sh` (primer arranque del volumen) y `deploy/postgres/grant-privileges.sql`.
 
 ```mermaid
 flowchart TB
@@ -756,40 +766,41 @@ Igual para `tags`, y para `entry_tags` a través de la nota. Cada transacción d
 
 ## 8. API REST (`/api`)
 
-| Método | Ruta | Permiso | Descripción |
-|--------|------|---------|-------------|
-| POST | `/api/auth/code` | público (rate limit) | Solicita código por correo (registro o acceso) |
-| POST | `/api/auth/code/verify` | público (rate limit) | Verifica código, crea cuenta si es nueva e inicia sesión |
-| POST | `/api/auth/logout` | sesión | Cierra la sesión actual |
-| GET | `/api/auth/me` | sesión | Usuario y permisos efectivos |
-| GET | `/api/account` | `profile:update` | Perfil propio |
-| PATCH | `/api/account` | `profile:update` | Cambia nombre visible y zona horaria |
-| GET | `/api/account/sessions` | `profile:update` | Lista sesiones activas |
-| DELETE | `/api/account/sessions/:id` | `profile:update` | Revoca una sesión |
-| POST | `/api/account/deletion` | `profile:update` | Solicita eliminación; se programa a 30 días y se cierran las sesiones |
-| DELETE | `/api/account/deletion` | `profile:update` | Cancela la eliminación programada (también al volver a iniciar sesión) |
-| GET | `/api/entries?from=&to=` | `entries:read` | Notas propias en un rango de fechas, ordenadas por fecha y hora |
-| GET | `/api/entries/:id` | `entries:read` | Detalle de una nota propia |
-| POST | `/api/entries` | `entries:write` | Crea una nota (`entry_date`, `entry_time`, `title`, `content`, `tags`) |
-| PATCH | `/api/entries/:id` | `entries:write` | Actualiza una nota (incluida fecha y hora) |
-| DELETE | `/api/entries/:id` | `entries:delete` | Elimina una nota |
-| GET | `/api/days/:date` | `entries:read` | Notas de un día, ordenadas por hora |
-| GET | `/api/calendar?month=YYYY-MM` | `entries:read` | Días con notas del mes |
-| GET | `/api/search?q=` | `entries:read` | Búsqueda full-text propia |
-| GET | `/api/tags` | `entries:read` | Etiquetas propias |
-| PUT | `/api/tags/:id` | `tags:manage` | Renombra etiqueta |
-| DELETE | `/api/tags/:id` | `tags:manage` | Elimina etiqueta |
-| GET | `/api/export?format=json\|md` | `export:run` | Exporta notas propias |
-| GET | `/api/admin/users` | `users:read` | Lista usuarios (sin contenido) |
-| PATCH | `/api/admin/users/:id` | `users:manage` | Activa o desactiva la cuenta |
-| POST | `/api/admin/users/:id/deletion` | `users:manage` | Programa la eliminación con 30 días de gracia |
-| DELETE | `/api/admin/users/:id/deletion` | `users:manage` | Cancela la eliminación programada |
-| PUT | `/api/admin/users/:id/roles` | `roles:manage` | Reemplaza los roles del usuario |
-| GET | `/api/admin/roles` | `roles:manage` | Lista roles y permisos |
-| GET | `/api/admin/audit?user=&action=` | `audit:read` | Consulta auditoría (paginada) |
-| GET | `/api/health` | público (sólo desde nginx) | Health check |
+| Método | Ruta                             | Permiso                    | Descripción                                                            |
+| ------ | -------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| POST   | `/api/auth/code`                 | público (rate limit)       | Solicita código por correo (registro o acceso)                         |
+| POST   | `/api/auth/code/verify`          | público (rate limit)       | Verifica código, crea cuenta si es nueva e inicia sesión               |
+| POST   | `/api/auth/logout`               | sesión                     | Cierra la sesión actual                                                |
+| GET    | `/api/auth/me`                   | sesión                     | Usuario y permisos efectivos                                           |
+| GET    | `/api/account`                   | `profile:update`           | Perfil propio                                                          |
+| PATCH  | `/api/account`                   | `profile:update`           | Cambia nombre visible y zona horaria                                   |
+| GET    | `/api/account/sessions`          | `profile:update`           | Lista sesiones activas                                                 |
+| DELETE | `/api/account/sessions/:id`      | `profile:update`           | Revoca una sesión                                                      |
+| POST   | `/api/account/deletion`          | `profile:update`           | Solicita eliminación; se programa a 30 días y se cierran las sesiones  |
+| DELETE | `/api/account/deletion`          | `profile:update`           | Cancela la eliminación programada (también al volver a iniciar sesión) |
+| GET    | `/api/entries?from=&to=`         | `entries:read`             | Notas propias en un rango de fechas, ordenadas por fecha y hora        |
+| GET    | `/api/entries/:id`               | `entries:read`             | Detalle de una nota propia                                             |
+| POST   | `/api/entries`                   | `entries:write`            | Crea una nota (`entry_date`, `entry_time`, `title`, `content`, `tags`) |
+| PATCH  | `/api/entries/:id`               | `entries:write`            | Actualiza una nota (incluida fecha y hora)                             |
+| DELETE | `/api/entries/:id`               | `entries:delete`           | Elimina una nota                                                       |
+| GET    | `/api/days/:date`                | `entries:read`             | Notas de un día, ordenadas por hora                                    |
+| GET    | `/api/calendar?month=YYYY-MM`    | `entries:read`             | Días con notas del mes                                                 |
+| GET    | `/api/search?q=`                 | `entries:read`             | Búsqueda full-text propia                                              |
+| GET    | `/api/tags`                      | `entries:read`             | Etiquetas propias                                                      |
+| PUT    | `/api/tags/:id`                  | `tags:manage`              | Renombra etiqueta                                                      |
+| DELETE | `/api/tags/:id`                  | `tags:manage`              | Elimina etiqueta                                                       |
+| GET    | `/api/export?format=json\|md`    | `export:run`               | Exporta notas propias                                                  |
+| GET    | `/api/admin/users`               | `users:read`               | Lista usuarios (sin contenido)                                         |
+| PATCH  | `/api/admin/users/:id`           | `users:manage`             | Activa o desactiva la cuenta                                           |
+| POST   | `/api/admin/users/:id/deletion`  | `users:manage`             | Programa la eliminación con 30 días de gracia                          |
+| DELETE | `/api/admin/users/:id/deletion`  | `users:manage`             | Cancela la eliminación programada                                      |
+| PUT    | `/api/admin/users/:id/roles`     | `roles:manage`             | Reemplaza los roles del usuario                                        |
+| GET    | `/api/admin/roles`               | `roles:manage`             | Lista roles y permisos                                                 |
+| GET    | `/api/admin/audit?user=&action=` | `audit:read`               | Consulta auditoría (paginada)                                          |
+| GET    | `/api/health`                    | público (sólo desde nginx) | Health check                                                           |
 
 Validaciones relevantes:
+
 - `entry_time`: formato `HH:mm` (00:00–23:59).
 - `entry_date`: formato `YYYY-MM-DD`.
 - Si se omite `entry_time` al crear, se usa la hora actual en la zona horaria del usuario.
@@ -799,6 +810,7 @@ Validaciones relevantes:
 ## 9. Seguridad
 
 **Autenticación por código**
+
 - Códigos de 6 dígitos generados con `crypto.randomInt`; caducan a los 10 minutos; un solo uso; máximo 5 intentos.
 - Sólo se guarda el HMAC del código; la comparación es en tiempo constante.
 - Límites: 3 códigos por email cada 15 minutos; límite por IP en nginx (`limit_req`) y en la aplicación.
@@ -806,23 +818,27 @@ Validaciones relevantes:
 - Sin contraseñas que robar ni reutilizar; la seguridad depende del acceso al correo del usuario. Recomendación: activar 2FA en la cuenta de correo.
 
 **Sesiones**
+
 - Ver sección 5.6.
 
 **Autorización**
+
 - Permisos verificados en middleware (`authorize('entries:read')`) y ownership en servicios.
 - RLS en PostgreSQL como segunda barrera.
 - Tests de aislamiento: un usuario no lee, edita ni borra notas ajenas (404); un `user` recibe 403 en rutas de admin.
 
 **Base de datos**
+
 - Roles separados (`diary_owner`, `diary_app`, `diary_backup`) con mínimo privilegio.
 - PostgreSQL sin puertos publicados; sólo accesible en la red interna de Docker.
 - Secretos mediante Docker secrets, generados con `openssl rand`.
 - Backups cifrados antes de salir del servidor.
 
 **Cloudflare y HTTP**
+
 - HTTPS público lo termina Cloudflare (modo SSL/TLS **Full** o **Full (strict)**); el tramo túnel→nginx va por la red interna de Docker en HTTP.
 - HSTS activado en Cloudflare (y repetido en nginx: `max-age=31536000; includeSubDomains`). TLS mínimo 1.2 configurado en Cloudflare.
-- Redirección automática a HTTPS (*Always Use HTTPS*) en Cloudflare.
+- Redirección automática a HTTPS (_Always Use HTTPS_) en Cloudflare.
 - Reglas de limitación de tasa en Cloudflare para `/api/auth/*` además de `limit_req` en nginx.
 - Opcional: **Cloudflare Access** (Zero Trust) delante de `/api/admin/*` o de toda la aplicación, como segunda capa de autenticación.
 - `limit_req` en nginx para `/api/auth/` (10 req/min por IP real) y límite de tamaño del cuerpo (`client_max_body_size 1m`).
@@ -832,22 +848,26 @@ Validaciones relevantes:
 - `server_tokens off`.
 
 **Aplicación y contenedores**
+
 - Validación con Zod en todas las entradas; límite de tamaño del body.
 - Markdown renderizado con sanitización (sin HTML crudo).
 - Contenedores como usuario no root; sistema de ficheros de solo lectura donde sea posible.
 - `.env` y `secrets/` fuera de git.
 
 **Servidor Ubuntu**
+
 - Usuario de despliegue sin root; SSH sólo con clave (`PasswordAuthentication no`).
 - `ufw`: sólo 22 (idealmente limitado a tu IP). No se abren 80 ni 443: el tráfico entra por el túnel saliente de `cloudflared`.
 - Los puertos 3004 y 5433 están ligados a `127.0.0.1`, por lo que tampoco son accesibles desde la red.
 - `fail2ban` para SSH; `unattended-upgrades` para parches de seguridad.
 
 **Auditoría**
+
 - Se registran: envío de código, código incorrecto o límite superado, login correcto, registro, logout, revocación de sesión, desactivación, eliminación, cambio de roles y exportaciones.
 - `audit_log` es append-only para `diary_app`.
 
 **Privacidad y RGPD**
+
 - Exportación completa de los datos propios y eliminación de cuenta con borrado en cascada.
 - Política de privacidad breve en la pantalla de registro (qué datos se guardan y que el correo lo envía Resend).
 
@@ -901,7 +921,7 @@ La subred `172.16.0.0/12` debe ajustarse a la red real de Docker (`docker networ
 
 Configuración en el panel de Cloudflare (Zero Trust → Networks → Tunnels):
 
-1. Crear un túnel de tipo *Cloudflared* y copiar el token.
+1. Crear un túnel de tipo _Cloudflared_ y copiar el token.
 2. Añadir un **Public Hostname**: `diario.midominio.com` → servicio `HTTP` → URL `nginx:80` (nombre del servicio en la red interna de Docker).
 3. Crear el registro DNS correspondiente; Cloudflare lo gestiona automáticamente al crear el hostname.
 4. Opcional: crear una aplicación de **Cloudflare Access** para el hostname o para `/api/admin/*`.
@@ -938,14 +958,15 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/pg_owner_password
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./deploy/postgres/init-roles.sql:/docker-entrypoint-initdb.d/10-roles.sql:ro
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+      - ./deploy/postgres/grant-privileges.sql:/opt/diary/grant-privileges.sql:ro
     secrets: [pg_owner_password, pg_app_password, pg_backup_password]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U diary_owner -d diary"]
       interval: 10s
       retries: 5
     restart: unless-stopped
-    ports: ["127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"]  # host 5433 -> contenedor 5432, sólo localhost
+    ports: ["127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"] # host 5433 -> contenedor 5432, sólo localhost
     networks: [internal]
 
   migrate:
@@ -985,7 +1006,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    ports: ["127.0.0.1:${APP_HTTP_PORT:-3004}:80"]   # sólo localhost; el público entra por cloudflared
+    ports: ["127.0.0.1:${APP_HTTP_PORT:-3004}:80"] # sólo localhost; el público entra por cloudflared
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
@@ -1000,7 +1021,7 @@ services:
     secrets: [cloudflare_tunnel_token]
     depends_on: [nginx]
     restart: unless-stopped
-    networks: [internal]           # sólo salida; no publica puertos
+    networks: [internal] # sólo salida; no publica puertos
 
 networks:
   internal:
@@ -1010,16 +1031,17 @@ volumes:
 
 secrets:
   cloudflare_tunnel_token: { file: ./secrets/cloudflare_tunnel_token.txt }
-  pg_owner_password:  { file: ./secrets/pg_owner_password.txt }
-  pg_owner_url:       { file: ./secrets/pg_owner_url.txt }
-  pg_app_password:    { file: ./secrets/pg_app_password.txt }
-  pg_app_url:         { file: ./secrets/pg_app_url.txt }
+  pg_owner_password: { file: ./secrets/pg_owner_password.txt }
+  pg_owner_url: { file: ./secrets/pg_owner_url.txt }
+  pg_app_password: { file: ./secrets/pg_app_password.txt }
+  pg_app_url: { file: ./secrets/pg_app_url.txt }
   pg_backup_password: { file: ./secrets/pg_backup_password.txt }
-  resend_api_key:     { file: ./secrets/resend_api_key.txt }
-  code_hmac_secret:   { file: ./secrets/code_hmac_secret.txt }
+  resend_api_key: { file: ./secrets/resend_api_key.txt }
+  code_hmac_secret: { file: ./secrets/code_hmac_secret.txt }
 ```
 
 Notas:
+
 - `app` sólo está en la red `internal` y no publica puertos. Necesita salida a internet para llamar a la API de Resend.
 - `cloudflared` y `nginx` están en `internal`; el tráfico público llega sólo a través del túnel saliente.
 - No hay certbot ni recarga de certificados: el HTTPS público lo gestiona Cloudflare (apartado 10).
@@ -1106,26 +1128,27 @@ Antes de desplegar cambios de esquema: copia manual con `pg_dump`.
 
 Scripts previstos en `package.json`:
 
-| Script | Función |
-|--------|---------|
-| `dev` | Entorno de desarrollo |
-| `build` | Compila frontend y backend |
-| `start` | Arranca el servidor compilado |
-| `typecheck` | `tsc --noEmit` |
-| `lint` | ESLint |
-| `test` | Vitest (unitarios) |
-| `test:integration` | Vitest contra PostgreSQL real |
-| `test:e2e` | Playwright |
-| `db:generate` | Genera migración desde el esquema Drizzle |
-| `db:migrate` | Aplica migraciones |
-| `user:create-admin` | Crea el primer administrador |
-| `codes:purge` | Elimina códigos caducados (también programable) |
+| Script              | Función                                         |
+| ------------------- | ----------------------------------------------- |
+| `dev`               | Entorno de desarrollo                           |
+| `build`             | Compila frontend y backend                      |
+| `start`             | Arranca el servidor compilado                   |
+| `typecheck`         | `tsc --noEmit`                                  |
+| `lint`              | ESLint                                          |
+| `test`              | Vitest (unitarios)                              |
+| `test:integration`  | Vitest contra PostgreSQL real                   |
+| `test:e2e`          | Playwright                                      |
+| `db:generate`       | Genera migración desde el esquema Drizzle       |
+| `db:migrate`        | Aplica migraciones                              |
+| `user:create-admin` | Crea el primer administrador                    |
+| `codes:purge`       | Elimina códigos caducados (también programable) |
 
 ---
 
 ## 13. Plan de desarrollo por fases
 
 ### Fase 0 – Preparación (1 día)
+
 - [ ] Inicializar `package.json`, TypeScript (`strict`), ESLint, Prettier.
 - [ ] Configurar Vite + React + Tailwind v4.
 - [ ] Estructura de carpetas según 3.2.
@@ -1134,16 +1157,18 @@ Scripts previstos en `package.json`:
 - [ ] README con instrucciones de desarrollo.
 
 ### Fase 1 – Base de datos y backend base (3 días)
+
 - [ ] Config con validación de variables de entorno (Zod) y lectura de secretos `*_FILE`.
 - [ ] Pool de conexiones `pg` + Drizzle.
 - [ ] Migración inicial: `users`, `login_codes`, `roles`, `permissions`, `role_permissions`, `user_roles`, `sessions`.
 - [ ] `seed.ts`: permisos y roles de sistema.
 - [ ] Migración de `entries` (con `entry_date` y `entry_time`), `tags`, `entry_tags`, `audit_log`, índices y `search_vector`.
-- [ ] `init-roles.sql` (`diary_app`, `diary_backup`) y permisos sobre `audit_log`.
+- [x] `init-roles.sh` (`diary_app`, `diary_backup`), `grant-privileges.sql` y permisos sobre `audit_log` (migración 0002).
 - [ ] `/api/health` con comprobación de BD.
 - [ ] Tests de integración del esquema y las migraciones.
 
 ### Fase 2 – Autenticación por código y correo (3 días)
+
 - [ ] Interfaz `MailService`, `ResendMailer` y `ConsoleMailer`.
 - [ ] Generación de código, HMAC y tabla `login_codes`.
 - [ ] `POST /api/auth/code` con respuesta uniforme y límites por email e IP.
@@ -1155,6 +1180,7 @@ Scripts previstos en `package.json`:
 - [ ] Tests del `ResendMailer` con el SDK mockeado (idempotency key y manejo de errores).
 
 ### Fase 3 – Autorización y administración (2–3 días)
+
 - [ ] Middleware `authorize(permiso)` y middleware de sesión.
 - [ ] Rutas `/api/admin/users`, `/roles` y asignación de roles.
 - [ ] Reglas de asignación (último admin, auto-desactivación).
@@ -1164,6 +1190,7 @@ Scripts previstos en `package.json`:
 - [ ] Tests de matriz de permisos (ruta × rol) y de aislamiento entre usuarios.
 
 ### Fase 4 – Notas y frontend (4 días)
+
 - [ ] `/api/entries` y `/api/tags` con fecha **y hora** (`HH:mm`), orden cronológico y hora por defecto según la zona del usuario.
 - [ ] Layout responsive con Tailwind (sidebar en escritorio, navegación inferior en móvil).
 - [ ] Vista "Hoy" con las notas del día y acción de nueva nota.
@@ -1176,12 +1203,14 @@ Scripts previstos en `package.json`:
 - [ ] Estados de carga, errores y confirmaciones al borrar.
 
 ### Fase 5 – Búsqueda y exportación (1–2 días)
+
 - [ ] Búsqueda con `search_vector` y `ts_headline`.
 - [ ] Exportación JSON y Markdown de las notas propias (auditada).
 - [ ] Solicitud de eliminación con 30 días de gracia y cancelación automática al iniciar sesión.
 - [ ] Exportación previa ofrecida en la pantalla de eliminación.
 
 ### Fase 6 – Contenedores, Nginx, Cloudflare y servidor (3 días)
+
 - [ ] `Dockerfile` multi-stage y `.dockerignore`.
 - [ ] `docker-compose.yml` con postgres, migrate, app, backup, nginx y cloudflared.
 - [ ] Configuración de nginx (`nginx.conf`, `conf.d/diary.conf`, `proxy_params.conf`) con `real_ip` desde `CF-Connecting-IP`.
@@ -1193,6 +1222,7 @@ Scripts previstos en `package.json`:
 - [ ] Despliegue inicial, creación del admin y prueba de registro desde el exterior.
 
 ### Fase 7 – Backups y operación (1–2 días)
+
 - [ ] Contenedor `backup` con `pg_dump` diario y rotación.
 - [ ] Copia externa cifrada (restic/rclone).
 - [ ] Restauración probada y documentada.
@@ -1200,12 +1230,14 @@ Scripts previstos en `package.json`:
 - [ ] Revisar en Resend los rebotes y la entregabilidad.
 
 ### Fase 8 – Calidad y pulido (2–3 días)
+
 - [ ] Tests e2e con Playwright (registro, código, crear nota con hora, aislamiento entre usuarios, exportar).
 - [ ] Revisión de accesibilidad y responsive.
 - [ ] Pipeline de CI.
 - [ ] Revisión de seguridad: `npm audit`, `trivy`, cabeceras (securityheaders.com), prueba de límites de nginx.
 
 ### Fase 9 – Mejoras opcionales (backlog)
+
 - Cambio de email con verificación en la nueva dirección.
 - Aviso por correo en cada inicio de sesión nuevo.
 - Enlace mágico además del código.
@@ -1220,38 +1252,38 @@ Scripts previstos en `package.json`:
 
 ## 14. Riesgos y mitigaciones
 
-| Riesgo | Impacto | Mitigación |
-|--------|---------|------------|
-| Pérdida de datos | Alto | Volumen persistente, `pg_dump` diario, copia externa cifrada, restauración probada |
-| Acceso no autorizado | Alto | Código de un solo uso, caducidad corta, límites de intentos y envíos, sesiones revocables |
-| Compromiso del correo del usuario | Alto | Consecuencia directa de no tener contraseña; recomendar 2FA en el proveedor de correo; sesiones revocables |
-| Abuso del registro (spam de cuentas o envíos) | Medio | `REGISTRATION_ENABLED`, `ALLOWED_EMAIL_DOMAINS`, límites por IP y por email, cuota de Resend |
-| Coste o cuota de Resend agotada | Medio | Revisar límites del plan; monitorizar envíos; alertas en el panel |
-| Correos en spam o no entregados | Medio | SPF, DKIM y DMARC verificados; contenido sencillo sin enlaces |
-| Fuga de datos entre usuarios | Alto | Ownership en servicios, RLS y tests de aislamiento |
-| Admin con acceso a notas | Alto | Admin sin permisos sobre `entries`; permisos verificados en servidor |
-| Compromiso de la base de datos | Medio | Roles de mínimo privilegio, BD sin puertos publicados, hashes de tokens y códigos |
-| Fuga de la clave de HMAC o de la API key | Medio | Docker secrets, rotación documentada |
-| Caída o mala configuración del túnel de Cloudflare | Medio | `restart: unless-stopped` en cloudflared, estado del túnel vigilado en el panel de Cloudflare, acceso local por `127.0.0.1:3004` para diagnóstico |
-| Acceso directo al origen saltando Cloudflare | Medio | Puertos publicados sólo en `127.0.0.1`; ufw sin 80/443; Access opcional |
-| Dependencia de Cloudflare (lock-in) | Bajo | Nginx y la aplicación son estándar; el dominio se puede apuntar a otro proxy si hace falta |
-| Dependencias vulnerables | Medio | `npm audit` y `trivy` en CI, Dependabot/Renovate |
-| Migraciones que dañan datos | Medio | Copia previa obligatoria, tests de integración de migraciones |
-| Caída del servidor | Medio | `restart: unless-stopped`, healthchecks, monitorización (Uptime Kuma opcional) |
+| Riesgo                                             | Impacto | Mitigación                                                                                                                                        |
+| -------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pérdida de datos                                   | Alto    | Volumen persistente, `pg_dump` diario, copia externa cifrada, restauración probada                                                                |
+| Acceso no autorizado                               | Alto    | Código de un solo uso, caducidad corta, límites de intentos y envíos, sesiones revocables                                                         |
+| Compromiso del correo del usuario                  | Alto    | Consecuencia directa de no tener contraseña; recomendar 2FA en el proveedor de correo; sesiones revocables                                        |
+| Abuso del registro (spam de cuentas o envíos)      | Medio   | `REGISTRATION_ENABLED`, `ALLOWED_EMAIL_DOMAINS`, límites por IP y por email, cuota de Resend                                                      |
+| Coste o cuota de Resend agotada                    | Medio   | Revisar límites del plan; monitorizar envíos; alertas en el panel                                                                                 |
+| Correos en spam o no entregados                    | Medio   | SPF, DKIM y DMARC verificados; contenido sencillo sin enlaces                                                                                     |
+| Fuga de datos entre usuarios                       | Alto    | Ownership en servicios, RLS y tests de aislamiento                                                                                                |
+| Admin con acceso a notas                           | Alto    | Admin sin permisos sobre `entries`; permisos verificados en servidor                                                                              |
+| Compromiso de la base de datos                     | Medio   | Roles de mínimo privilegio, BD sin puertos publicados, hashes de tokens y códigos                                                                 |
+| Fuga de la clave de HMAC o de la API key           | Medio   | Docker secrets, rotación documentada                                                                                                              |
+| Caída o mala configuración del túnel de Cloudflare | Medio   | `restart: unless-stopped` en cloudflared, estado del túnel vigilado en el panel de Cloudflare, acceso local por `127.0.0.1:3004` para diagnóstico |
+| Acceso directo al origen saltando Cloudflare       | Medio   | Puertos publicados sólo en `127.0.0.1`; ufw sin 80/443; Access opcional                                                                           |
+| Dependencia de Cloudflare (lock-in)                | Bajo    | Nginx y la aplicación son estándar; el dominio se puede apuntar a otro proxy si hace falta                                                        |
+| Dependencias vulnerables                           | Medio   | `npm audit` y `trivy` en CI, Dependabot/Renovate                                                                                                  |
+| Migraciones que dañan datos                        | Medio   | Copia previa obligatoria, tests de integración de migraciones                                                                                     |
+| Caída del servidor                                 | Medio   | `restart: unless-stopped`, healthchecks, monitorización (Uptime Kuma opcional)                                                                    |
 
 ---
 
 ## 15. Decisiones tomadas
 
-| # | Tema | Decisión |
-|---|------|----------|
-| 1 | Registro | Abierto por defecto (`REGISTRATION_ENABLED=true`), con posibilidad de cerrarlo por variable de entorno. Sin lista de dominios por ahora (`ALLOWED_EMAIL_DOMAINS` vacío). |
-| 2 | Dominio | Lo configura el responsable del proyecto. El plan sólo requiere un hostname público apuntando al túnel y el dominio verificado en Resend. |
-| 3 | Cloudflare Access | Se configurará más adelante, fuera del alcance del MVP. |
-| 4 | Zona horaria | Se detecta en el navegador en el primer inicio de sesión (`Intl.DateTimeFormat().resolvedOptions().timeZone`) y es editable en el perfil. Si no se detecta, se usa `UTC`. |
-| 5 | Eliminación de cuentas | Periodo de gracia de **30 días**. Ver apartado 5.7. |
-| 6 | Imágenes y adjuntos | Fuera del MVP. Se almacenarán en un bucket S3 de MinIO (ver backlog). |
-| 7 | Idioma de la interfaz | Español, con i18n preparado para añadir otros idiomas. |
+| #   | Tema                   | Decisión                                                                                                                                                                  |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Registro               | Abierto por defecto (`REGISTRATION_ENABLED=true`), con posibilidad de cerrarlo por variable de entorno. Sin lista de dominios por ahora (`ALLOWED_EMAIL_DOMAINS` vacío).  |
+| 2   | Dominio                | Lo configura el responsable del proyecto. El plan sólo requiere un hostname público apuntando al túnel y el dominio verificado en Resend.                                 |
+| 3   | Cloudflare Access      | Se configurará más adelante, fuera del alcance del MVP.                                                                                                                   |
+| 4   | Zona horaria           | Se detecta en el navegador en el primer inicio de sesión (`Intl.DateTimeFormat().resolvedOptions().timeZone`) y es editable en el perfil. Si no se detecta, se usa `UTC`. |
+| 5   | Eliminación de cuentas | Periodo de gracia de **30 días**. Ver apartado 5.7.                                                                                                                       |
+| 6   | Imágenes y adjuntos    | Fuera del MVP. Se almacenarán en un bucket S3 de MinIO (ver backlog).                                                                                                     |
+| 7   | Idioma de la interfaz  | Español, con i18n preparado para añadir otros idiomas.                                                                                                                    |
 
 Adicionalmente, por indicación del responsable: **todo el código y los comentarios están en inglés** (ver apartado 3.3).
 
