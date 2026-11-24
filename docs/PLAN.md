@@ -143,8 +143,6 @@ diary/
 │   │   ├── api/                   # Cliente HTTP tipado
 │   │   └── styles/                # index.css con @import "tailwindcss"
 │   └── shared/                    # Esquemas Zod y tipos compartidos
-├── cli/
-│   └── create-admin.ts            # Primer administrador (bootstrap)
 ├── tests/
 │   ├── unit/
 │   ├── integration/               # Fastify + PostgreSQL real (Testcontainers)
@@ -1078,7 +1076,7 @@ Los secretos (`RESEND_API_KEY`, `CODE_HMAC_SECRET`, `CLOUDFLARE_TUNNEL_TOKEN`, U
 Primer administrador (tras las migraciones):
 
 ```bash
-docker compose run --rm app node dist/cli/create-admin.js --email=luis@midominio.com
+docker compose run --rm app node dist/server/cli/create-admin.js --email=luis@midominio.com
 # Envía un código al correo; el administrador lo introduce en la web para entrar
 ```
 
@@ -1169,15 +1167,15 @@ Scripts previstos en `package.json`:
 
 ### Fase 2 – Autenticación por código y correo (3 días)
 
-- [ ] Interfaz `MailService`, `ResendMailer` y `ConsoleMailer`.
-- [ ] Generación de código, HMAC y tabla `login_codes`.
-- [ ] `POST /api/auth/code` con respuesta uniforme y límites por email e IP.
-- [ ] `POST /api/auth/code/verify` con intentos, caducidad y consumo único.
-- [ ] Registro automático al verificar código (si `REGISTRATION_ENABLED`).
-- [ ] Sesiones en `sessions`, cookie segura, `/api/auth/me` y logout.
-- [ ] CLI `create-admin`.
-- [ ] Tests: código correcto, incorrecto, caducado, reutilizado, límite de intentos, límite de envíos, cuenta deshabilitada, registro cerrado, respuestas indistinguibles.
-- [ ] Tests del `ResendMailer` con el SDK mockeado (idempotency key y manejo de errores).
+- [x] Interfaz `MailService`, `ResendMailer` y `ConsoleMailer`.
+- [x] Generación de código, HMAC y tabla `login_codes`.
+- [x] `POST /api/auth/code` con respuesta uniforme y límites por email e IP.
+- [x] `POST /api/auth/code/verify` con intentos, caducidad y consumo único.
+- [x] Registro automático al verificar código (si `REGISTRATION_ENABLED`).
+- [x] Sesiones en `sessions`, cookie segura, `/api/auth/me` y logout.
+- [x] CLI `create-admin`.
+- [x] Tests: código correcto, incorrecto, caducado, reutilizado, límite de intentos, límite de envíos, cuenta deshabilitada, registro cerrado, respuestas indistinguibles.
+- [x] Tests del `ResendMailer` con el SDK mockeado (idempotency key y manejo de errores).
 
 ### Fase 3 – Autorización y administración (2–3 días)
 

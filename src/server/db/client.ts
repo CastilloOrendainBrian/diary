@@ -36,3 +36,9 @@ export function createDatabaseClient(
     close: () => pool.end(),
   };
 }
+
+/** A transaction handle, usable wherever a Database is accepted by services. */
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+/** Anything a service can run queries on: the pool-backed database or an open transaction. */
+export type DbExecutor = Database | Transaction;
