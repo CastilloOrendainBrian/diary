@@ -25,5 +25,6 @@ export const errors = {
   validation: (message: string) => new ApiError(400, "VALIDATION_ERROR", message),
   cannotModifySelf: () =>
     new ApiError(409, "CANNOT_MODIFY_SELF", "You cannot make this change to your own account"),
+  tagExists: () => new ApiError(409, "TAG_EXISTS", "You already have a tag with that name"),
   lastAdmin: () => new ApiError(409, "LAST_ADMIN", "At least one active administrator must remain"),
 };

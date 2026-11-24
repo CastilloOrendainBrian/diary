@@ -1,8 +1,13 @@
 import type { FastifyInstance } from "fastify";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 import type { Database } from "../db/client.js";
+import { users } from "../db/schema.js";
+import { isValidTimezone } from "../security/email.js";
 import { errors } from "../errors.js";
 import { authorize } from "../plugins/auth-context.js";
 import { listSessions, revokeOwnSession } from "../services/sessions.js";
+import { toPublicUser } from "./auth.js";
 
 const SESSION_ID_PATTERN = /^[0-9a-f]{64}$/;
 
@@ -54,4 +59,42 @@ export function registerAccountRoutes(app: FastifyInstance, deps: AccountRoutesD
       return reply.code(204).send();
     },
   );
+}
+
+const profileSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(60),
+    timezone: z.string().min(1).max(64),
+  })
+  .partial();
+
+/** Lets the signed-in user change their visible name and timezone. */
+export function registerProfileRoutes(app: FastifyInstance, deps: AccountRoutesDeps): void {
+  const { db } = deps;
+
+  app.patch("/api/account", { preHandler: authorize("profile:update") }, async (request) => {
+    const auth = request.auth;
+    if (!auth) throw errors.unauthenticated();
+
+    const body = profileSchema.safeParse(request.body);
+    if (!body.success) {
+      throw errors.validation("displayName must be 1-60 characters and timezone must be set");
+    }
+    if (body.data.timezone !== undefined && !isValidTimezone(body.data.timezone)) {
+      throw errors.validation("timezone must be a valid IANA timezone, e.g. Europe/Madrid");
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({
+        ...(body.data.displayName !== undefined ? { displayName: body.data.displayName } : {}),
+        ...(body.data.timezone !== undefined ? { timezone: body.data.timezone } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, auth.userId))
+      .returning();
+    if (!updated) throw errors.unauthenticated();
+
+    return { user: toPublicUser(updated) };
+  });
 }

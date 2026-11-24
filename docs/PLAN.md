@@ -1188,16 +1188,26 @@ Scripts previstos en `package.json`:
 
 ### Fase 4 – Notas y frontend (4 días)
 
-- [ ] `/api/entries` y `/api/tags` con fecha **y hora** (`HH:mm`), orden cronológico y hora por defecto según la zona del usuario.
-- [ ] Layout responsive con Tailwind (sidebar en escritorio, navegación inferior en móvil).
-- [ ] Vista "Hoy" con las notas del día y acción de nueva nota.
-- [ ] Selector de fecha y hora al crear o editar notas.
-- [ ] Calendario mensual con indicadores de días con notas.
-- [ ] Vista de día con lista ordenada por hora.
-- [ ] Editor Markdown con vista previa y sanitización.
-- [ ] Pantallas: registro/acceso por email, introducción del código, cuenta (perfil y sesiones).
-- [ ] Panel de administración (usuarios, roles, auditoría).
-- [ ] Estados de carga, errores y confirmaciones al borrar.
+- [x] `/api/entries` y `/api/tags` con fecha **y hora** (`HH:mm`), orden cronológico y hora por defecto según la zona del usuario.
+- [x] Layout responsive con Tailwind (sidebar en escritorio, navegación inferior en móvil).
+- [x] Vista "Hoy" con las notas del día y acción de nueva nota.
+- [x] Selector de fecha y hora al crear o editar notas.
+- [x] Calendario mensual con indicadores de días con notas.
+- [x] Vista de día con lista ordenada por hora.
+- [x] Editor Markdown con vista previa y sanitización.
+- [x] Pantallas: registro/acceso por email, introducción del código, cuenta (perfil y sesiones).
+- [x] Panel de administración (usuarios, roles, auditoría).
+- [x] Estados de carga, errores y confirmaciones al borrar.
+
+Decisiones de implementación de la Fase 4:
+
+- Router: React Router. Markdown: `react-markdown` con `skipHtml`, de modo que el HTML crudo se descarta y no hace falta `rehype-sanitize`.
+- Textos en español vía i18next (`src/client/locales/es.json`).
+- Rango de `GET /api/entries?from&to`: ambos extremos incluidos.
+- Calendario con la semana empezando en lunes.
+- `PATCH /api/account` (nombre y zona horaria) se añade aquí para el perfil.
+- Búsqueda y exportación quedan para la Fase 5.
+- Pendiente de la Fase 6: servir la SPA compilada (`dist/client`) desde el servidor en producción; en desarrollo la sirve Vite.
 
 ### Fase 5 – Búsqueda y exportación (1–2 días)
 

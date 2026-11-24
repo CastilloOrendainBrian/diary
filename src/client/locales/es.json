@@ -1,0 +1,134 @@
+{
+  "common": {
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "back": "Volver",
+    "retry": "Reintentar",
+    "confirmDelete": "¿Eliminar este elemento? No se puede deshacer."
+  },
+  "nav": {
+    "brand": "Diario",
+    "today": "Hoy",
+    "calendar": "Calendario",
+    "tags": "Etiquetas",
+    "account": "Cuenta",
+    "admin": "Administración",
+    "logout": "Salir"
+  },
+  "login": {
+    "title": "Entrar en tu diario",
+    "intro": "Te enviaremos un código de 6 dígitos a tu correo. No necesitas contraseña.",
+    "email": "Correo electrónico",
+    "sendCode": "Enviar código",
+    "codeSentTo": "Hemos enviado un código a {{email}}. Caduca en 10 minutos.",
+    "code": "Código de 6 dígitos",
+    "verify": "Entrar",
+    "resend": "Reenviar código",
+    "changeEmail": "Usar otro correo"
+  },
+  "errors": {
+    "UNKNOWN": "No se ha podido completar la acción.",
+    "NETWORK": "No hay conexión con el servidor.",
+    "UNAUTHENTICATED": "Tu sesión ha caducado. Vuelve a entrar.",
+    "FORBIDDEN": "No tienes permiso para esta acción.",
+    "INVALID_CODE": "El código no es válido o ha caducado.",
+    "ACCOUNT_DISABLED": "Esta cuenta no está disponible.",
+    "REGISTRATION_CLOSED": "El registro no está disponible.",
+    "RATE_LIMITED": "Demasiados intentos. Espera unos minutos.",
+    "VALIDATION_ERROR": "Revisa los datos introducidos.",
+    "INVALID_ORIGIN": "La petición ha sido bloqueada.",
+    "NOT_FOUND": "No se ha encontrado.",
+    "TAG_EXISTS": "Ya tienes una etiqueta con ese nombre.",
+    "CANNOT_MODIFY_SELF": "No puedes hacer este cambio en tu propia cuenta.",
+    "LAST_ADMIN": "Debe quedar al menos un administrador activo."
+  },
+  "day": {
+    "newEntry": "Nueva nota",
+    "empty": "No hay notas en este día.",
+    "previous": "Día anterior",
+    "next": "Día siguiente",
+    "untitled": "Sin título",
+    "entries_one": "{{count}} nota",
+    "entries_other": "{{count}} notas"
+  },
+  "entry": {
+    "newTitle": "Nueva nota",
+    "editTitle": "Editar nota",
+    "date": "Fecha",
+    "time": "Hora",
+    "titleLabel": "Título",
+    "tags": "Etiquetas",
+    "tagsHelp": "Separadas por comas",
+    "content": "Contenido",
+    "markdownHelp": "Admite Markdown: # títulos, **negrita**, listas y enlaces.",
+    "write": "Escribir",
+    "preview": "Vista previa",
+    "emptyPreview": "Nada que mostrar todavía.",
+    "deleteEntry": "Eliminar nota",
+    "notFound": "Esta nota no existe o ya no está disponible."
+  },
+  "calendar": {
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "entries_one": "{{count}} nota",
+    "entries_other": "{{count}} notas"
+  },
+  "tags": {
+    "title": "Etiquetas",
+    "empty": "Todavía no tienes etiquetas. Añádelas al escribir una nota.",
+    "usage_one": "Usada en {{count}} nota",
+    "usage_other": "Usada en {{count}} notas",
+    "rename": "Renombrar",
+    "delete": "Eliminar etiqueta"
+  },
+  "account": {
+    "title": "Cuenta",
+    "email": "Correo",
+    "profile": "Perfil",
+    "displayName": "Nombre visible",
+    "timezone": "Zona horaria",
+    "timezoneHelp": "Se usa para decidir qué día y qué hora son ahora para ti.",
+    "saveProfile": "Guardar perfil",
+    "profileSaved": "Perfil actualizado.",
+    "sessions": "Sesiones activas",
+    "currentSession": "Esta sesión",
+    "revoke": "Cerrar sesión",
+    "lastSeen": "Última actividad",
+    "createdAt": "Iniciada",
+    "unknownDevice": "Dispositivo desconocido",
+    "noSessions": "No hay otras sesiones activas.",
+    "signOut": "Salir de este dispositivo"
+  },
+  "admin": {
+    "title": "Administración",
+    "users": "Usuarios",
+    "audit": "Auditoría",
+    "email": "Correo",
+    "name": "Nombre",
+    "status": "Estado",
+    "roles": "Roles",
+    "active": "Activa",
+    "disabled": "Desactivada",
+    "disable": "Desactivar",
+    "enable": "Activar",
+    "you": "Tú",
+    "lastLogin": "Último acceso",
+    "never": "Nunca",
+    "date": "Fecha",
+    "action": "Acción",
+    "actor": "Autor",
+    "system": "Sistema",
+    "noEvents": "Todavía no hay eventos.",
+    "roleNames": {
+      "user": "Usuario",
+      "admin": "Administrador"
+    }
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "link": "Ir al inicio"
+  }
+}

@@ -7,7 +7,8 @@ import type { MailService } from "./mail/mailer.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
 import { registerAuthContext } from "./plugins/auth-context.js";
 import { registerOriginCheck } from "./plugins/origin-check.js";
-import { registerAccountRoutes } from "./routes/account.js";
+import { registerAccountRoutes, registerProfileRoutes } from "./routes/account.js";
+import { registerEntryRoutes } from "./routes/entries.js";
 import { registerAdminRoutes } from "./routes/admin.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { AuthCodeService } from "./services/auth-codes.js";
@@ -71,6 +72,8 @@ export async function buildApp(
 
   registerAuthRoutes(app, { db: database.db, config, authCodes });
   registerAccountRoutes(app, { db: database.db });
+  registerProfileRoutes(app, { db: database.db });
+  registerEntryRoutes(app, { db: database.db });
   registerAdminRoutes(app, { db: database.db });
 
   return app;
