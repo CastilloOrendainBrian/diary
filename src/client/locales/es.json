@@ -16,7 +16,8 @@
     "tags": "Etiquetas",
     "account": "Cuenta",
     "admin": "Administración",
-    "logout": "Salir"
+    "logout": "Salir",
+    "search": "Buscar"
   },
   "login": {
     "title": "Entrar en tu diario",
@@ -100,7 +101,11 @@
     "createdAt": "Iniciada",
     "unknownDevice": "Dispositivo desconocido",
     "noSessions": "No hay otras sesiones activas.",
-    "signOut": "Salir de este dispositivo"
+    "signOut": "Salir de este dispositivo",
+    "exportTitle": "Exportar mis notas",
+    "exportHelp": "Descarga todas tus notas. La exportación queda registrada en la auditoría.",
+    "exportJson": "Descargar JSON",
+    "exportMarkdown": "Descargar Markdown"
   },
   "admin": {
     "title": "Administración",
@@ -130,5 +135,12 @@
   "notFound": {
     "title": "Página no encontrada",
     "link": "Ir al inicio"
+  },
+  "search": {
+    "title": "Buscar en mis notas",
+    "placeholder": "Palabras a buscar…",
+    "submit": "Buscar",
+    "prompt": "Escribe una palabra o frase para buscar en tus notas.",
+    "empty": "No hay notas que coincidan con la búsqueda."
   }
 }

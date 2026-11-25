@@ -41,3 +41,30 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   }
   return data as T;
 }
+
+/**
+ * Downloads a file from the API (for example the diary export). The file name comes from the
+ * Content-Disposition header that the server sets.
+ */
+export async function downloadFile(path: string): Promise<{ blob: Blob; fileName: string }> {
+  let response: Response;
+  try {
+    response = await fetch(path, { credentials: "same-origin" });
+  } catch {
+    throw new ApiError(0, "NETWORK", "Network error");
+  }
+
+  if (!response.ok) {
+    const data: unknown = await response.json().catch(() => null);
+    const error = (data as { error?: { code?: string; message?: string } } | null)?.error;
+    throw new ApiError(
+      response.status,
+      error?.code ?? "UNKNOWN",
+      error?.message ?? response.statusText,
+    );
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename="([^"]+)"/.exec(disposition);
+  return { blob: await response.blob(), fileName: match?.[1] ?? "diario.txt" };
+}

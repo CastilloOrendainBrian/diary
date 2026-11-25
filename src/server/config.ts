@@ -55,6 +55,8 @@ const envSchema = z
     /** Connection string for the owner role (diary_owner). Only used by migrations. */
     DATABASE_MIGRATION_URL: postgresUrl.optional(),
     MIGRATIONS_DIR: z.string().default("src/server/db/migrations"),
+    /** Directory with the built client (index.html and assets). Unset in development. */
+    STATIC_DIR: z.string().optional(),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
     // Registration and login codes

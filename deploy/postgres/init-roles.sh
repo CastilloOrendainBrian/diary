@@ -5,13 +5,17 @@
 #
 # Environment:
 #   POSTGRES_USER, POSTGRES_DB       provided by the official postgres image (owner role and main DB)
-#   DIARY_APP_PASSWORD               password of the runtime role diary_app (required)
-#   DIARY_BACKUP_PASSWORD            password of the backup role diary_backup (required)
+#   DIARY_APP_PASSWORD[_FILE]        password of the runtime role diary_app (required)
+#   DIARY_BACKUP_PASSWORD[_FILE]     password of the backup role diary_backup (required)
 #   DIARY_TEST_DATABASE              "true" to also create the diary_test database (development only)
 set -eu
 
-: "${DIARY_APP_PASSWORD:?DIARY_APP_PASSWORD is required}"
-: "${DIARY_BACKUP_PASSWORD:?DIARY_BACKUP_PASSWORD is required}"
+# Passwords may come from a file (Docker secret, *_FILE) or directly from the environment.
+if [ -n "${DIARY_APP_PASSWORD_FILE:-}" ]; then DIARY_APP_PASSWORD="$(cat "$DIARY_APP_PASSWORD_FILE")"; fi
+if [ -n "${DIARY_BACKUP_PASSWORD_FILE:-}" ]; then DIARY_BACKUP_PASSWORD="$(cat "$DIARY_BACKUP_PASSWORD_FILE")"; fi
+
+: "${DIARY_APP_PASSWORD:?DIARY_APP_PASSWORD or DIARY_APP_PASSWORD_FILE is required}"
+: "${DIARY_BACKUP_PASSWORD:?DIARY_BACKUP_PASSWORD or DIARY_BACKUP_PASSWORD_FILE is required}"
 
 # Mounted outside /docker-entrypoint-initdb.d on purpose: the image would run it
 # automatically before the roles exist.

@@ -20,6 +20,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE diary_owner IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO diary_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE diary_owner IN SCHEMA public
   GRANT SELECT ON TABLES TO diary_backup;
+ALTER DEFAULT PRIVILEGES FOR ROLE diary_owner IN SCHEMA public
+  GRANT SELECT ON SEQUENCES TO diary_backup;
 
 -- Objects that already exist (for example when the database is reset in tests).
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO diary_app;

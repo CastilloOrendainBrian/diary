@@ -3,6 +3,9 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { account, type SessionInfo } from "../services/endpoints";
 import { useAuth, useCurrentUser } from "../auth/AuthContext";
+import { exportPath } from "../services/endpoints";
+import { downloadFile } from "../services/http";
+import { saveBlob } from "../lib/download";
 import { Alert } from "../components/Alert";
 import { buttonDanger, buttonPrimary, buttonSecondary, card, input } from "../components/ui";
 import { formatTimestamp, timezoneOptions } from "../lib/format";
@@ -12,7 +15,7 @@ import { useErrorText } from "../lib/use-error-text";
 export default function AccountPage() {
   const { t } = useTranslation();
   const user = useCurrentUser();
-  const { refresh, signOut } = useAuth();
+  const { can, refresh, signOut } = useAuth();
   const errorText = useErrorText();
   const navigate = useNavigate();
 
@@ -26,6 +29,8 @@ export default function AccountPage() {
 
   const [sessions, setSessions] = useState<SessionInfo[] | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -64,6 +69,19 @@ export default function AccountPage() {
       setSessions((current) => current?.filter((session) => session.id !== id) ?? null);
     } catch (error) {
       setSessionError(errorText(error));
+    }
+  }
+
+  async function exportDiary(format: "json" | "md") {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const file = await downloadFile(exportPath(format));
+      saveBlob(file.blob, file.fileName);
+    } catch (error) {
+      setExportError(errorText(error));
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -152,6 +170,32 @@ export default function AccountPage() {
           <p className="text-sm text-stone-500">{t("account.noSessions")}</p>
         )}
       </section>
+
+      {can("export:run") && (
+        <section className={`${card} space-y-4`}>
+          <h2 className="font-medium text-stone-900">{t("account.exportTitle")}</h2>
+          <p className="text-sm text-stone-600">{t("account.exportHelp")}</p>
+          {exportError && <Alert tone="error">{exportError}</Alert>}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={() => void exportDiary("json")}
+              className={buttonSecondary}
+            >
+              {t("account.exportJson")}
+            </button>
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={() => void exportDiary("md")}
+              className={buttonSecondary}
+            >
+              {t("account.exportMarkdown")}
+            </button>
+          </div>
+        </section>
+      )}
 
       <div>
         <button type="button" onClick={() => void handleSignOut()} className={buttonSecondary}>

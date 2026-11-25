@@ -5,6 +5,7 @@ import type {
   TagView,
   UpdateEntryInput,
 } from "../../shared/entries.js";
+import type { SearchHit } from "../../shared/search.js";
 import { request } from "./http.js";
 
 export interface CurrentUser {
@@ -107,3 +108,15 @@ export const admin = {
   audit: async () =>
     (await request<{ events: AuditEvent[] }>("GET", "/api/admin/audit?limit=50")).events,
 };
+
+export const search = {
+  query: async (q: string, limit = 20) =>
+    (
+      await request<{ results: SearchHit[] }>(
+        "GET",
+        `/api/search?q=${encodeURIComponent(q)}&limit=${String(limit)}`,
+      )
+    ).results,
+};
+
+export const exportPath = (format: "json" | "md") => `/api/export?format=${format}`;

@@ -1211,22 +1211,39 @@ Decisiones de implementación de la Fase 4:
 
 ### Fase 5 – Búsqueda y exportación (1–2 días)
 
-- [ ] Búsqueda con `search_vector` y `ts_headline`.
-- [ ] Exportación JSON y Markdown de las notas propias (auditada).
-- [ ] Solicitud de eliminación con 30 días de gracia y cancelación automática al iniciar sesión.
-- [ ] Exportación previa ofrecida en la pantalla de eliminación.
+- [x] Búsqueda con `search_vector` y `ts_headline`.
+- [x] Exportación JSON y Markdown de las notas propias (auditada).
+- [x] Solicitud de eliminación con 30 días de gracia y cancelación automática al iniciar sesión.
+- [x] Exportación previa ofrecida en la pantalla de eliminación.
 
-### Fase 6 – Contenedores, Nginx, Cloudflare y servidor (3 días)
+Decisiones de implementación de la Fase 5:
 
-- [ ] `Dockerfile` multi-stage y `.dockerignore`.
-- [ ] `docker-compose.yml` con postgres, migrate, app, backup, nginx y cloudflared.
-- [ ] Configuración de nginx (`nginx.conf`, `conf.d/diary.conf`, `proxy_params.conf`) con `real_ip` desde `CF-Connecting-IP`.
-- [ ] Puertos: nginx en `127.0.0.1:3004` y postgres en `127.0.0.1:5433`.
-- [ ] Crear el túnel en Cloudflare Zero Trust, el Public Hostname (`nginx:80`) y guardar el token en `secrets/`.
-- [ ] Reglas de Cloudflare: Always Use HTTPS, HSTS, rate limiting para `/api/auth/*`, y Access opcional para `/api/admin/*`.
-- [ ] Dominio verificado en Resend (SPF, DKIM, DMARC) y API key en secrets.
-- [ ] Preparar Ubuntu: usuario no root, SSH por clave, Docker, ufw, fail2ban, unattended-upgrades.
-- [ ] Despliegue inicial, creación del admin y prueba de registro desde el exterior.
+- Búsqueda: `websearch_to_tsquery('spanish')` sobre `search_vector` (con stemming, p. ej. "mercados" encuentra "mercado"). El resaltado usa `ts_headline` con marcadores `[[ ]]` en texto plano; el navegador los convierte en `<mark>` sin insertar HTML de la nota.
+- Exportación: `GET /api/export?format=json|md`, permiso `export:run`, descarga con `Content-Disposition` y `X-Content-Type-Options: nosniff`. Cada exportación queda en la auditoría (`export.run`).
+- La eliminación de cuenta con exportación previa (endpoints `/deletion` y purga) sigue pendiente; corresponde a la gestión de cuentas de la Fase 7.
+
+### Fase 6 – Contenedores, Nginx y servidor
+
+- [x] `Dockerfile` multi-stage y `.dockerignore` (imagen de la app: API, SPA compilada y migraciones; usuario `node`).
+- [x] `docker-compose.yml` con postgres, migrate, app, backup y nginx. Sin cloudflared.
+- [ ] Configuración de nginx con `real_ip` desde `CF-Connecting-IP`. Pendiente de decisión (ver nota).
+- [x] Puertos: nginx en `127.0.0.1:3004` y postgres en `127.0.0.1:5433`.
+- [x] Dominio verificado en Resend (SPF, DKIM, DMARC) y API key en secrets (`scripts/generate-secrets.sh`).
+- [ ] ~~Crear el túnel en Cloudflare Zero Trust~~ (omitido por decisión).
+- [ ] ~~Reglas de Cloudflare~~ (omitido por decisión).
+- [ ] ~~Preparar Ubuntu~~ (omitido por decisión).
+- [ ] ~~Despliegue inicial, creación del admin y prueba desde el exterior~~ (omitido por decisión).
+
+Decisiones de implementación de la Fase 6:
+
+- La app sirve la SPA compilada (`STATIC_DIR`) con recarga de rutas (`index.html` para rutas del cliente, 404 JSON para `/api`).
+- El contenedor `migrate` lee sólo `DATABASE_MIGRATION_URL`; no recibe los demás secretos.
+- Roles de PostgreSQL con contraseñas desde secrets (`*_FILE`). `diary_backup` tiene `BYPASSRLS` y puede leer el registro de migraciones y las secuencias (migraciones 0004 y 0005).
+- Secrets: `secrets/` con permisos 0700 en el host; los ficheros son 0644 para que los contenedores que los montan puedan leerlos. Cada servicio sólo monta los secrets que necesita.
+- Backup: `pg_dump -Fc` con el rol de solo lectura, retención por antigüedad, escritura atómica (`.partial` y luego `mv`).
+- Sólo nginx y postgres publican puertos, y sólo en `127.0.0.1`.
+
+Nota sobre `real_ip` (pendiente): `CF-Connecting-IP` es la cabecera que Cloudflare añade con la IP real del visitante cuando el tráfico pasa por su proxy. Nginx sólo puede usarla si la petición viene de Cloudflare (`set_real_ip_from`); si no, cualquiera podría falsificarla. Sin Cloudflare delante, no aplica. Sirve para que el límite de peticiones de `/api/auth/` cuente por visitante y no por la IP de Cloudflare.
 
 ### Fase 7 – Backups y operación (1–2 días)
 

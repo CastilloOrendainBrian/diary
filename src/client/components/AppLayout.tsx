@@ -20,6 +20,7 @@ export default function AppLayout() {
     ? [
         { to: `/day/${todayIn(user.timezone)}`, label: t("nav.today") },
         { to: "/calendar", label: t("nav.calendar") },
+        { to: "/search", label: t("nav.search") },
         { to: "/tags", label: t("nav.tags") },
       ]
     : [];

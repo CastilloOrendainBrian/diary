@@ -1,5 +1,6 @@
 import fastifyCookie from "@fastify/cookie";
 import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance } from "fastify";
 import type { AppConfig } from "./config.js";
 import type { DatabaseClient } from "./db/client.js";
@@ -9,6 +10,7 @@ import { registerAuthContext } from "./plugins/auth-context.js";
 import { registerOriginCheck } from "./plugins/origin-check.js";
 import { registerAccountRoutes, registerProfileRoutes } from "./routes/account.js";
 import { registerEntryRoutes } from "./routes/entries.js";
+import { registerSearchExportRoutes } from "./routes/search-export.js";
 import { registerAdminRoutes } from "./routes/admin.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { AuthCodeService } from "./services/auth-codes.js";
@@ -74,7 +76,29 @@ export async function buildApp(
   registerAccountRoutes(app, { db: database.db });
   registerProfileRoutes(app, { db: database.db });
   registerEntryRoutes(app, { db: database.db });
+  registerSearchExportRoutes(app, { db: database.db });
+
+  if (config.STATIC_DIR) {
+    await registerClientFiles(app, config.STATIC_DIR);
+  }
   registerAdminRoutes(app, { db: database.db });
 
   return app;
+}
+
+/**
+ * Serves the built single-page application. Real files are served as-is; any other GET outside
+ * /api returns index.html so client-side routes such as /day/2026-11-24 work on reload.
+ * Unknown /api paths keep returning JSON 404 errors.
+ */
+async function registerClientFiles(app: FastifyInstance, root: string): Promise<void> {
+  await app.register(fastifyStatic, { root, wildcard: false });
+
+  app.setNotFoundHandler(async (request, reply) => {
+    const isApi = request.url.startsWith("/api/");
+    if (request.method === "GET" && !isApi) {
+      return reply.type("text/html; charset=utf-8").sendFile("index.html");
+    }
+    return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Not found" } });
+  });
 }

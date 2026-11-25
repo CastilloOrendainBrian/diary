@@ -1,0 +1,140 @@
+# Production stack: PostgreSQL, one-off migrations, application, backups and Nginx.
+# Only Nginx publishes a port, and only on 127.0.0.1. Secrets are read from ./secrets
+# (create them with scripts/generate-secrets.sh). Values not defined here come from .env.
+name: diary
+
+x-app-env: &app-env
+  NODE_ENV: production
+  PORT: "3000"
+  HOST: 0.0.0.0
+  PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env, e.g. https://diario.example.com}
+  # Only the internal network can reach the app, so trusting its single hop (nginx) is safe.
+  TRUST_PROXY: 172.28.0.0/24
+  REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+  ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-}
+  MAIL_PROVIDER: resend
+  MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM in .env, a sender on your verified Resend domain}
+  MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
+  DATABASE_URL_FILE: /run/secrets/database_app_url
+  CODE_HMAC_SECRET_FILE: /run/secrets/code_hmac_secret
+  RESEND_API_KEY_FILE: /run/secrets/resend_api_key
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: diary
+      POSTGRES_USER: diary_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_owner_password
+      DIARY_APP_PASSWORD_FILE: /run/secrets/diary_app_password
+      DIARY_BACKUP_PASSWORD_FILE: /run/secrets/diary_backup_password
+    secrets:
+      - postgres_owner_password
+      - diary_app_password
+      - diary_backup_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, when the data volume is first initialized.
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+      - ./deploy/postgres/grant-privileges.sql:/opt/diary/grant-privileges.sql:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diary_owner -d diary"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    build: .
+    image: diary-app:latest
+    command: ["node", "dist/server/db/migrate.js"]
+    restart: "no"
+    environment:
+      MIGRATIONS_DIR: /app/migrations
+      DATABASE_MIGRATION_URL_FILE: /run/secrets/database_owner_url
+    secrets:
+      - database_owner_url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  app:
+    build: .
+    image: diary-app:latest
+    restart: unless-stopped
+    environment: *app-env
+    secrets:
+      - database_app_url
+      - code_hmac_secret
+      - resend_api_key
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+
+  backup:
+    build: ./scripts/backup
+    restart: unless-stopped
+    # Runs as the host user so the dumps in ./backups can be read and copied without sudo.
+    user: "${BACKUP_UID:-1000}:${BACKUP_GID:-1000}"
+    environment:
+      PGHOST: postgres
+      PGDATABASE: diary
+      PGUSER: diary_backup
+      BACKUP_PASSWORD_FILE: /run/secrets/diary_backup_password
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    secrets:
+      - diary_backup_password
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${NGINX_HOST_PORT:-3004}:80"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pgdata:
+
+secrets:
+  postgres_owner_password:
+    file: ./secrets/postgres_owner_password.txt
+  diary_app_password:
+    file: ./secrets/diary_app_password.txt
+  diary_backup_password:
+    file: ./secrets/diary_backup_password.txt
+  database_owner_url:
+    file: ./secrets/database_owner_url.txt
+  database_app_url:
+    file: ./secrets/database_app_url.txt
+  code_hmac_secret:
+    file: ./secrets/code_hmac_secret.txt
+  resend_api_key:
+    file: ./secrets/resend_api_key.txt

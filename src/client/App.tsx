@@ -11,6 +11,7 @@ import CalendarPage from "./routes/CalendarPage";
 import DayPage from "./routes/DayPage";
 import EntryPage from "./routes/EntryPage";
 import LoginPage from "./routes/LoginPage";
+import SearchPage from "./routes/SearchPage";
 import TagsPage from "./routes/TagsPage";
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="day/:date/new" element={<EntryPage />} />
           <Route path="entries/:id" element={<EntryPage />} />
           <Route path="calendar" element={<CalendarPage />} />
+          <Route path="search" element={<SearchPage />} />
           <Route path="tags" element={<TagsPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="admin" element={<AdminPage />} />
