@@ -81,7 +81,7 @@ services:
   backup:
     build: ./scripts/backup
     restart: unless-stopped
-    # Runs as the host user so the dumps in ./backups can be read and copied without sudo.
+    # Runs as the host user so the dumps can be read and copied without sudo.
     user: "${BACKUP_UID:-1000}:${BACKUP_GID:-1000}"
     environment:
       PGHOST: postgres
@@ -92,7 +92,8 @@ services:
     secrets:
       - diary_backup_password
     volumes:
-      - ./backups:/backups
+      # Outside the project directory in CI (BACKUP_DIR), so workspace cleanup never deletes them.
+      - ${BACKUP_DIR:-./backups}:/backups
     depends_on:
       postgres:
         condition: service_healthy

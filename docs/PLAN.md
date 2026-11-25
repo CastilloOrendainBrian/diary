@@ -1266,7 +1266,7 @@ Nota sobre `real_ip` (pendiente): `CF-Connecting-IP` es la cabecera que Cloudfla
 - Aviso por correo en cada inicio de sesión nuevo.
 - Enlace mágico además del código.
 - Adjuntar imágenes a las notas, almacenadas en un bucket S3 de MinIO (self-hosted; se añadirá un contenedor `minio` y un cliente S3 en la aplicación).
-- PWA instalable con recordatorio diario.
+- PWA instalable con modo offline básico (hecho: manifiesto, iconos y service worker de la app shell; sin caché de /api). Pendiente: recordatorio diario.
 - Cifrado de contenido de notas a nivel de aplicación.
 - Webhooks de Resend (rebotes y quejas) para desactivar direcciones problemáticas.
 
