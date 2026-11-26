@@ -10,10 +10,12 @@
 
 pipeline {
     agent {
-        label 'docker-agent'
         // Same path inside the agent and on the host, so the relative paths in the compose file
         // (./secrets, .env) resolve identically for the Docker daemon. Mounted in jenkins-agent.
-        customWorkspace '/opt/diary'
+        node {
+            label 'docker-agent'
+            customWorkspace '/opt/diary'
+        }
     }
 
     parameters {
