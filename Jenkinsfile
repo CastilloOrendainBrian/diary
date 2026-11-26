@@ -82,7 +82,14 @@ pipeline {
                         chmod 700 secrets
                         chmod 644 secrets/*.txt
 
-                        mkdir -p "$BACKUP_DIR"
+                        # The directory must exist and be writable by the Jenkins user. It is created once
+                        # by an administrator on the agent (the pipeline cannot use sudo).
+                        if [ ! -d "$BACKUP_DIR" ] || [ ! -w "$BACKUP_DIR" ]; then
+                            echo "BACKUP_DIR $BACKUP_DIR is missing or not writable by $(id -un)." >&2
+                            echo "On the agent, run once as an administrator:" >&2
+                            echo "  sudo mkdir -p $BACKUP_DIR && sudo chown $(id -u):$(id -g) $BACKUP_DIR" >&2
+                            exit 1
+                        fi
                     '''
                 }
             }
