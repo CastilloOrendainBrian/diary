@@ -33,6 +33,24 @@ pipeline {
     }
 
     stages {
+        stage('Verify workspace') {
+            steps {
+                // Stops early if the agent is running another project's compose file (stale workspace).
+                sh '''
+                    set -eu
+                    echo "commit: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+                    grep -q '^name: diary$' docker-compose.yml || {
+                        echo "docker-compose.yml in $(pwd) is not the diary stack; cleanWs and checkout again" >&2
+                        exit 1
+                    }
+                    if grep -q 'laravel-last' docker-compose.yml; then
+                        echo "docker-compose.yml references laravel-last resources" >&2
+                        exit 1
+                    fi
+                '''
+            }
+        }
+
         stage('Prepare environment') {
             steps {
                 withCredentials([
@@ -43,16 +61,26 @@ pipeline {
                         set -eu
                         cp "$DIARY_ENV_FILE" .env
 
-                        rm -rf secrets && mkdir -p secrets
-                        tar -xzf "$DIARY_SECRETS_TGZ" -C secrets
-                        chmod 700 secrets
-                        chmod 644 secrets/*.txt
+                        # Extract to a scratch directory first: the archive may hold the files at its root
+                        # or inside a subfolder, so each secret is located by name.
+                        tmp="$(mktemp -d)"
+                        trap 'rm -rf "$tmp"' EXIT
+                        tar -xzf "$DIARY_SECRETS_TGZ" -C "$tmp"
 
-                        # Fail early if a required secret is missing or empty.
+                        rm -rf secrets && mkdir -p secrets
                         for name in postgres_owner_password diary_app_password diary_backup_password \
                                     database_owner_url database_app_url code_hmac_secret resend_api_key; do
-                            test -s "secrets/$name.txt" || { echo "missing or empty secrets/$name.txt" >&2; exit 1; }
+                            found="$(find "$tmp" -type f -name "$name.txt" | head -n 1)"
+                            if [ -z "$found" ] || [ ! -s "$found" ]; then
+                                echo "DIARY_SECRETS does not contain a non-empty $name.txt" >&2
+                                echo "archive entries:" >&2
+                                tar -tzf "$DIARY_SECRETS_TGZ" >&2 || true
+                                exit 1
+                            fi
+                            cp "$found" "secrets/$name.txt"
                         done
+                        chmod 700 secrets
+                        chmod 644 secrets/*.txt
 
                         mkdir -p "$BACKUP_DIR"
                     '''
