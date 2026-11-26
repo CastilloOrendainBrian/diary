@@ -14,7 +14,9 @@ pipeline {
         // (./secrets, .env) resolve identically for the Docker daemon. Mounted in jenkins-agent.
         node {
             label 'docker-agent'
-            customWorkspace '/opt/diary'
+            // Inside /opt/diary (mounted and owned by uid 1000), so Jenkins can create the workspace
+            // and its "@tmp" sibling. A path directly under /opt is root-owned inside the agent.
+            customWorkspace '/opt/diary/workspace'
         }
     }
 
