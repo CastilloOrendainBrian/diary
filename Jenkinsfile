@@ -11,6 +11,9 @@
 pipeline {
     agent {
         label 'docker-agent'
+        // Same path inside the agent and on the host, so the relative paths in the compose file
+        // (./secrets, .env) resolve identically for the Docker daemon. Mounted in jenkins-agent.
+        customWorkspace '/opt/diary'
     }
 
     parameters {
@@ -126,9 +129,9 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-                    # End-to-end check through nginx, from the agent itself.
+                    # Checked from inside the app container: 127.0.0.1 in the agent is not the host.
                     for attempt in 1 2 3 4 5 6; do
-                        if curl -fsS "http://127.0.0.1:${NGINX_HOST_PORT}/api/health"; then
+                        if docker compose -f $COMPOSE_FILE exec -T app wget -qO- http://127.0.0.1:3000/api/health; then
                             echo
                             echo "deploy healthy"
                             exit 0
